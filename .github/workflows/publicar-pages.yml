@@ -21,16 +21,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar Pages
+      - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Preparar archivos
+      - name: Preparar sitio
+        run: |
+          mkdir -p public
+
+          cp bm-la-roca.ics public/bm-la-roca.ics
+
+      - name: Subir sitio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ./public
 
       - name: Publicar
         id: deployment
