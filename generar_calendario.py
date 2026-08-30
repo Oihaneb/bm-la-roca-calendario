@@ -3,13 +3,11 @@ import hashlib
 import requests
 
 from bs4 import BeautifulSoup
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, Alarm
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 
-# Calendario oficial 2026/27 de División de Honor Plata Femenina,
-# Grupo C, de la RFEBM.
 URL = (
     "https://resultadosbalonmano.isquad.es/"
     "calendario.php?id=1038403"
@@ -22,134 +20,19 @@ URL = (
     "&seleccion=0"
 )
 
-EQUIPO = "MUBAK"
-NOMBRE_CALENDARIO = "BM La Roca - División de Honor Plata Femenina"
-ZONA_HORARIA = "Europe/Madrid"
+EQUIPO = "MUBAK - BM LA ROCA"
+TIMEZONE = ZoneInfo("Europe/Madrid")
 
 
 def limpiar(texto):
     return re.sub(r"\s+", " ", texto).strip()
 
 
-def crear_uid(local, visitante, fecha, jornada):
+def crear_uid(jornada, fecha, local, visitante):
     texto = f"{jornada}|{fecha}|{local}|{visitante}"
-    hash_partido = hashlib.sha256(
+    return hashlib.sha256(
         texto.encode("utf-8")
-    ).hexdigest()
-
-    return f"{hash_partido}@bm-la-roca"
-
-
-def separar_equipos(texto):
-    """
-    Convierte:
-
-        MUBAK - BM LA ROCA - HANDBOL SANT CUGAT A
-
-    en:
-
-        local = MUBAK - BM LA ROCA
-        visitante = HANDBOL SANT CUGAT A
-
-    El calendario de RFEBM utiliza ' - ' como separador.
-    """
-
-    texto = limpiar(texto)
-
-    if texto.upper().startswith("VS "):
-        texto = texto[3:].strip()
-
-    partes = texto.split(" - ")
-
-    if len(partes) < 2:
-        return None, None
-
-    # BM La Roca puede aparecer como:
-    # MUBAK - BM LA ROCA
-    #
-    # Por eso buscamos dónde aparece BM LA ROCA y tomamos
-    # dos partes para el nombre del equipo.
-
-    posiciones_roca = []
-
-    for i, parte in enumerate(partes):
-        if "BM LA ROCA" in parte.upper():
-            posiciones_roca.append(i)
-
-    if posiciones_roca:
-        i = posiciones_roca[0]
-
-        # Normalmente:
-        # MUBAK - BM LA ROCA - RIVAL
-        if i > 0:
-            local = " - ".join(partes[:i + 1])
-            visitante = " - ".join(partes[i + 1:])
-
-            if visitante:
-                return limpiar(local), limpiar(visitante)
-
-        # Si BM La Roca es visitante:
-        if i < len(partes) - 1:
-            local = " - ".join(partes[:i])
-            visitante = " - ".join(partes[i:])
-
-            if local:
-                return limpiar(local), limpiar(visitante)
-
-    # Último recurso
-    mitad = len(partes) // 2
-
-    local = " - ".join(partes[:mitad])
-    visitante = " - ".join(partes[mitad:])
-
-    return limpiar(local), limpiar(visitante)
-
-
-def obtener_fecha_hora(texto, fecha_jornada):
-    """
-    Busca una fecha/hora del tipo:
-
-        08/10/2026 21:15
-
-    Si no existe, utiliza la fecha de la jornada.
-
-    Cuando RFEBM muestra 0:00 significa que todavía no
-    hay hora definitiva. En ese caso creamos un evento de
-    día completo en vez de inventar una hora.
-    """
-
-    patron = r"(\d{2}/\d{2}/\d{4})\s+(\d{1,2}:\d{2})"
-
-    encontrado = re.search(patron, texto)
-
-    if encontrado:
-        fecha = encontrado.group(1)
-        hora = encontrado.group(2)
-
-        dt = datetime.strptime(
-            f"{fecha} {hora}",
-            "%d/%m/%Y %H:%M"
-        )
-
-        if hora == "0:00" or hora == "00:00":
-            return dt.date(), None
-
-        return (
-            dt.replace(
-                tzinfo=ZoneInfo(ZONA_HORARIA)
-            ),
-            "hora"
-        )
-
-    if fecha_jornada:
-        dt = datetime.strptime(
-            fecha_jornada,
-            "%d-%m-%Y"
-        )
-
-        return dt.date(), None
-
-    return None, None
+    ).hexdigest() + "@bm-la-roca"
 
 
 def main():
@@ -158,21 +41,23 @@ def main():
 
     respuesta = requests.get(
         URL,
-        timeout=30,
+        timeout=60,
         headers={
             "User-Agent": (
                 "Mozilla/5.0 "
-                "(iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-                "AppleWebKit/605.1.15 "
-                "Version/17.0 Mobile/15E148 Safari/604.1"
-            )
-        }
+                "(Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 "
+                "(KHTML, like Gecko) "
+                "Chrome/139.0 Safari/537.36"
+            ),
+            "Accept-Language": "es-ES,es;q=0.9",
+        },
     )
 
-    respuesta.raise_for_status()
+    print("Código HTTP:", respuesta.status_code)
+    print("Tamaño de la página:", len(respuesta.text))
 
-    # La página puede venir con una codificación antigua.
-    respuesta.encoding = respuesta.apparent_encoding
+    respuesta.raise_for_status()
 
     soup = BeautifulSoup(
         respuesta.text,
@@ -183,162 +68,272 @@ def main():
 
     calendario.add(
         "prodid",
-        "-//BM La Roca//Division Honor Plata Femenina//ES"
+        "-//BM La Roca//DH Plata Femenina//ES"
     )
-
     calendario.add("version", "2.0")
     calendario.add("calscale", "GREGORIAN")
     calendario.add("method", "PUBLISH")
-
     calendario.add(
         "x-wr-calname",
-        NOMBRE_CALENDARIO
+        "BM La Roca - División de Honor Plata Femenina"
     )
-
     calendario.add(
         "x-wr-timezone",
-        ZONA_HORARIA
+        "Europe/Madrid"
     )
 
+    jornada = None
+    fecha_jornada = None
     partidos = []
 
-    fecha_jornada = None
-    jornada_actual = None
-
-    # La RFEBM presenta los partidos en filas <tr>.
     filas = soup.find_all("tr")
+
+    print("Filas encontradas:", len(filas))
 
     for fila in filas:
 
         texto = limpiar(
-            fila.get_text(" ", strip=True)
+            fila.get_text(
+                " ",
+                strip=True
+            )
         )
 
         if not texto:
             continue
 
-        # --------------------------------------------------
+        # -----------------------------------------------
         # Detectar jornada
-        # Ejemplo:
-        # JORNADA 1 (04-10-2026)
-        # --------------------------------------------------
+        # -----------------------------------------------
 
-        patron_jornada = re.search(
-            r"JORNADA\s+(\d+)\s*\((\d{2}-\d{2}-\d{4})\)",
+        match_jornada = re.search(
+            r"JORNADA\s+(\d+)\s*\((\d{2})-(\d{2})-(\d{4})\)",
             texto,
             re.IGNORECASE
         )
 
-        if patron_jornada:
+        if match_jornada:
 
-            jornada_actual = int(
-                patron_jornada.group(1)
+            jornada = int(
+                match_jornada.group(1)
             )
 
-            fecha_jornada = patron_jornada.group(2)
+            fecha_jornada = datetime.strptime(
+                (
+                    f"{match_jornada.group(2)}-"
+                    f"{match_jornada.group(3)}-"
+                    f"{match_jornada.group(4)}"
+                ),
+                "%d-%m-%Y"
+            ).date()
 
             print(
-                f"Jornada {jornada_actual}: "
-                f"{fecha_jornada}"
+                f"Jornada {jornada} "
+                f"({fecha_jornada})"
             )
 
             continue
 
-        # --------------------------------------------------
-        # Solo queremos partidos donde aparezca BM LA ROCA
-        # --------------------------------------------------
+        # -----------------------------------------------
+        # Solo partidos de BM La Roca
+        # -----------------------------------------------
 
         if "BM LA ROCA" not in texto.upper():
             continue
 
-        # Evitar filas que no sean partidos.
-        if "VS " not in texto.upper():
-            continue
-
-        # --------------------------------------------------
-        # Extraer equipos
-        # --------------------------------------------------
-
-        local, visitante = separar_equipos(texto)
-
-        if not local or not visitante:
-            print(
-                "No se pudieron separar los equipos:",
-                texto
-            )
-            continue
-
-        # --------------------------------------------------
-        # Fecha y hora
-        # --------------------------------------------------
-
-        fecha_hora, tipo_fecha = obtener_fecha_hora(
-            texto,
-            fecha_jornada
-        )
-
-        if fecha_hora is None:
-            print(
-                "No se pudo obtener fecha:",
-                texto
-            )
-            continue
-
-        # --------------------------------------------------
-        # Lugar
-        # --------------------------------------------------
+        print("PARTIDO ENCONTRADO:")
+        print(texto)
 
         columnas = [
-            limpiar(c.get_text(" ", strip=True))
-            for c in fila.find_all(["td", "th"])
+            limpiar(
+                celda.get_text(
+                    " ",
+                    strip=True
+                )
+            )
+            for celda in fila.find_all(
+                ["td", "th"]
+            )
         ]
+
+        print("COLUMNAS:", columnas)
+
+        if not columnas:
+            continue
+
+        # -----------------------------------------------
+        # La primera columna contiene los dos equipos
+        # -----------------------------------------------
+
+        equipos = columnas[0]
+
+        # Quitar VS
+        equipos = re.sub(
+            r"^\s*VS\s+",
+            "",
+            equipos,
+            flags=re.IGNORECASE
+        )
+
+        partes = re.split(
+            r"\s+-\s+",
+            equipos
+        )
+
+        if len(partes) < 2:
+            print(
+                "No se pudieron separar los equipos"
+            )
+            continue
+
+        # Normalmente son exactamente dos
+        local = limpiar(partes[0])
+        visitante = limpiar(
+            " - ".join(partes[1:])
+        )
+
+        # -----------------------------------------------
+        # Buscar fecha/hora
+        # -----------------------------------------------
+
+        fecha = fecha_jornada
+        hora = None
+
+        for columna in columnas:
+
+            # Fecha + hora
+            m = re.search(
+                r"(\d{2})/(\d{2})/(\d{4})\s+"
+                r"(\d{1,2}):(\d{2})",
+                columna
+            )
+
+            if m:
+
+                fecha = datetime.strptime(
+                    (
+                        f"{m.group(1)}/"
+                        f"{m.group(2)}/"
+                        f"{m.group(3)}"
+                    ),
+                    "%d/%m/%Y"
+                ).date()
+
+                hora = (
+                    int(m.group(4)),
+                    int(m.group(5))
+                )
+
+                break
+
+            # Solo hora
+            m = re.fullmatch(
+                r"(\d{1,2}):(\d{2})",
+                columna
+            )
+
+            if m:
+
+                h = int(m.group(1))
+                minutos = int(m.group(2))
+
+                if h != 0 or minutos != 0:
+
+                    hora = (
+                        h,
+                        minutos
+                    )
+
+        if fecha is None:
+            print(
+                "No se pudo determinar la fecha"
+            )
+            continue
+
+        # -----------------------------------------------
+        # Buscar pabellón
+        # -----------------------------------------------
 
         lugar = ""
 
-        if columnas:
-            # Normalmente el último campo es el pabellón.
-            posible_lugar = columnas[-1]
+        for columna in columnas[1:]:
 
             if (
-                posible_lugar
-                and "JORNADA" not in posible_lugar.upper()
+                columna
+                and columna not in [
+                    "-",
+                    "0 - 0",
+                    "0:00"
+                ]
+                and not re.fullmatch(
+                    r"\d{1,2}:\d{2}",
+                    columna
+                )
+                and not re.fullmatch(
+                    r"\d{2}/\d{2}/\d{4}.*",
+                    columna
+                )
             ):
-                lugar = posible_lugar
+
+                if (
+                    "PABELL" in columna.upper()
+                    or "POLIESPORT" in columna.upper()
+                    or "PALAU" in columna.upper()
+                    or "POLIDEPORT" in columna.upper()
+                ):
+                    lugar = columna
+                    break
 
         partidos.append(
             {
-                "jornada": jornada_actual,
-                "fecha": fecha_hora,
-                "tipo_fecha": tipo_fecha,
+                "jornada": jornada,
+                "fecha": fecha,
+                "hora": hora,
                 "local": local,
                 "visitante": visitante,
                 "lugar": lugar,
-                "texto_original": texto,
             }
         )
 
-    # ------------------------------------------------------
-    # Eliminar duplicados
-    # ------------------------------------------------------
+    print(
+        "--------------------------------"
+    )
 
-    partidos_unicos = {}
+    print(
+        "PARTIDOS ENCONTRADOS:",
+        len(partidos)
+    )
+
+    print(
+        "--------------------------------"
+    )
+
+    if not partidos:
+
+        raise RuntimeError(
+            "La página RFEBM se ha descargado, "
+            "pero no se han podido localizar "
+            "los partidos de BM La Roca."
+        )
+
+    # -----------------------------------------------
+    # Eliminar duplicados
+    # -----------------------------------------------
+
+    unicos = {}
 
     for partido in partidos:
 
         clave = (
             partido["jornada"],
-            str(partido["fecha"]),
+            partido["fecha"],
             partido["local"],
             partido["visitante"],
         )
 
-        partidos_unicos[clave] = partido
+        unicos[clave] = partido
 
-    partidos = list(partidos_unicos.values())
-
-    # ------------------------------------------------------
-    # Ordenar
-    # ------------------------------------------------------
+    partidos = list(unicos.values())
 
     partidos.sort(
         key=lambda p: (
@@ -347,52 +342,50 @@ def main():
         )
     )
 
-    print(
-        f"Partidos encontrados: {len(partidos)}"
-    )
-
-    if not partidos:
-
-        raise RuntimeError(
-            "No se han encontrado partidos de "
-            "MUBAK BM LA ROCA en el calendario oficial "
-            "2026/27 de la RFEBM."
-        )
-
-    # ------------------------------------------------------
+    # -----------------------------------------------
     # Crear eventos
-    # ------------------------------------------------------
+    # -----------------------------------------------
 
     for partido in partidos:
 
         evento = Event()
 
         uid = crear_uid(
-            partido["local"],
-            partido["visitante"],
+            partido["jornada"],
             partido["fecha"],
-            partido["jornada"]
+            partido["local"],
+            partido["visitante"]
         )
 
-        evento.add("uid", uid)
-
-        titulo = (
-            f"🤾 {partido['local']} - "
-            f"{partido['visitante']}"
+        evento.add(
+            "uid",
+            uid
         )
 
         evento.add(
             "summary",
-            titulo
+            (
+                f"🤾 {partido['local']} - "
+                f"{partido['visitante']}"
+            )
         )
 
-        # --------------------------------------------------
-        # Partido con hora conocida
-        # --------------------------------------------------
+        # -------------------------------------------
+        # Con hora confirmada
+        # -------------------------------------------
 
-        if partido["tipo_fecha"] == "hora":
+        if partido["hora"]:
 
-            inicio = partido["fecha"]
+            h, minutos = partido["hora"]
+
+            inicio = datetime(
+                partido["fecha"].year,
+                partido["fecha"].month,
+                partido["fecha"].day,
+                h,
+                minutos,
+                tzinfo=TIMEZONE
+            )
 
             fin = inicio + timedelta(
                 hours=2
@@ -408,68 +401,94 @@ def main():
                 fin
             )
 
-            evento.add(
-                "dtstamp",
-                datetime.now(
-                    ZoneInfo(ZONA_HORARIA)
-                )
+            # Aviso 24 horas antes
+            alarma1 = Alarm()
+            alarma1.add(
+                "action",
+                "DISPLAY"
+            )
+            alarma1.add(
+                "description",
+                "Partido BM La Roca mañana"
+            )
+            alarma1.add(
+                "trigger",
+                timedelta(hours=-24)
             )
 
-        # --------------------------------------------------
-        # Partido sin hora confirmada
-        # --------------------------------------------------
+            evento.add_component(
+                alarma1
+            )
+
+            # Aviso 2 horas antes
+            alarma2 = Alarm()
+            alarma2.add(
+                "action",
+                "DISPLAY"
+            )
+            alarma2.add(
+                "description",
+                "Partido BM La Roca en 2 horas"
+            )
+            alarma2.add(
+                "trigger",
+                timedelta(hours=-2)
+            )
+
+            evento.add_component(
+                alarma2
+            )
+
+        # -------------------------------------------
+        # Sin hora confirmada
+        # -------------------------------------------
 
         else:
 
-            fecha = partido["fecha"]
-
             evento.add(
                 "dtstart",
-                fecha
+                partido["fecha"]
             )
 
             evento.add(
                 "dtend",
-                fecha + timedelta(days=1)
-            )
-
-            evento.add(
-                "dtstamp",
-                datetime.now(
-                    ZoneInfo(ZONA_HORARIA)
-                )
+                partido["fecha"]
+                + timedelta(days=1)
             )
 
             evento.add(
                 "description",
-                "Hora pendiente de confirmar por RFEBM."
+                "Hora pendiente de confirmar."
             )
 
-        # --------------------------------------------------
+        # -------------------------------------------
         # Lugar
-        # --------------------------------------------------
+        # -------------------------------------------
 
         if partido["lugar"]:
+
             evento.add(
                 "location",
                 partido["lugar"]
             )
 
-        # --------------------------------------------------
+        # -------------------------------------------
         # Descripción
-        # --------------------------------------------------
+        # -------------------------------------------
 
         descripcion = (
             "División de Honor Plata Femenina\n"
-            "Liga Regular - Grupo C\n"
+            "Liga Regular - Grupo C\n\n"
             f"Jornada: {partido['jornada']}\n"
             f"Local: {partido['local']}\n"
             f"Visitante: {partido['visitante']}"
         )
 
         if partido["lugar"]:
+
             descripcion += (
-                f"\nPabellón: {partido['lugar']}"
+                f"\nPabellón: "
+                f"{partido['lugar']}"
             )
 
         evento.add(
@@ -477,58 +496,13 @@ def main():
             descripcion
         )
 
-        # --------------------------------------------------
-        # Alarmas
-        # --------------------------------------------------
-
-        alarma_24h = Event()
-
-        # Usamos VALARM correctamente a continuación.
-        from icalendar import Alarm
-
-        alarm1 = Alarm()
-        alarm1.add(
-            "action",
-            "DISPLAY"
-        )
-        alarm1.add(
-            "description",
-            "Partido BM La Roca mañana"
-        )
-        alarm1.add(
-            "trigger",
-            timedelta(hours=-24)
+        calendario.add_component(
+            evento
         )
 
-        evento.add_component(alarm1)
-
-        alarm2 = Alarm()
-        alarm2.add(
-            "action",
-            "DISPLAY"
-        )
-        alarm2.add(
-            "description",
-            "Partido BM La Roca en 2 horas"
-        )
-        alarm2.add(
-            "trigger",
-            timedelta(hours=-2)
-        )
-
-        evento.add_component(alarm2)
-
-        calendario.add_component(evento)
-
-        print(
-            f"OK: {partido['fecha']} - "
-            f"{partido['local']} vs "
-            f"{partido['visitante']}"
-        )
-
-    # ------------------------------------------------------
-    # Guardar ICS
-    # ------------------------------------------------------
+    # -----------------------------------------------
+    # Guardar calendario
+    # -----------------------------------------------
 
     with open(
         "bm-la-roca.ics",
@@ -540,8 +514,24 @@ def main():
         )
 
     print(
-        "Calendario generado correctamente: "
-        "bm-la-roca.ics"
+        "--------------------------------"
+    )
+
+    print(
+        "CALENDARIO GENERADO CORRECTAMENTE"
+    )
+
+    print(
+        "Archivo: bm-la-roca.ics"
+    )
+
+    print(
+        "Partidos:",
+        len(partidos)
+    )
+
+    print(
+        "--------------------------------"
     )
 
 
