@@ -97,14 +97,14 @@ DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
 LOCATION:PABELLÓN ESPERANZA LAG
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:🤾 MUBAK - BM LA ROCA - BM. MARNI
+SUMMARY:🤾 MUBAK - BM LA ROCA - BM. MARNI ROSVAL
 DTSTART;VALUE=DATE:20261115
 DTEND;VALUE=DATE:20261116
-UID:6290ee4f57bc515f58915553425a25c2d596a78feba506c482d247d3a73b0002@bm-la
+UID:2bb0aee7d3147df6b94a290532f55dee3e1393761fe14c5e3683bb5be5e23dd3@bm-la
  -roca
 DESCRIPTION:Hora pendiente de confirmar.
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
- ornada: 7\nLocal: MUBAK\nVisitante: BM LA ROCA - BM. MARNI
+ ornada: 7\nLocal: MUBAK\nVisitante: BM LA ROCA - BM. MARNI ROSVAL
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:🤾 GRUPO USA HANDBOL MISLATA - MUBAK - BM LA ROCA
@@ -236,14 +236,14 @@ DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
  ornada: 19\nLocal: MUBAK\nVisitante: BM LA ROCA - CBM ELCHE
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:🤾 BM. MARNI - MUBAK - BM LA ROCA
+SUMMARY:🤾 BM. MARNI ROSVAL - MUBAK - BM LA ROCA
 DTSTART;TZID=Europe/Madrid:20270307T123000
 DTEND;TZID=Europe/Madrid:20270307T143000
-UID:bfb5d760582ea6604b81c0a3364f2a88ecfcdd4160c946a0c269fade6918965d@bm-la
+UID:eae94fa967487829413123e1f691129caa26b3c7289cf94614dfe1765607e4c5@bm-la
  -roca
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
- ornada: 20\nLocal: BM. MARNI\nVisitante: MUBAK - BM LA ROCA\nPabellón: Po
- lideportivo Marni
+ ornada: 20\nLocal: BM. MARNI ROSVAL\nVisitante: MUBAK - BM LA ROCA\nPabell
+ ón: Polideportivo Marni
 LOCATION:Polideportivo Marni
 BEGIN:VALARM
 ACTION:DISPLAY
