@@ -191,8 +191,8 @@ UID:1841abccc0b871cab2a1c9286e49b5c35f421015bb258155d2d72928dfd5f2d8@bm-la
 DESCRIPTION:Hora pendiente de confirmar.
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
  ornada: 10\nLocal: FUNDACIO HANDBOL SANT VICENÇ\nVisitante: MUBAK - BM LA
-  ROCA\nPabellón: Poliesportiu Municipal Sant Josep
-LOCATION:Poliesportiu Municipal Sant Josep
+  ROCA\nPabellón: POLIESPORTIU MUNICIPAL SANT JOSEP
+LOCATION:POLIESPORTIU MUNICIPAL SANT JOSEP
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:🤾 MUBAK - BM LA ROCA - HANDBOL ONDA
@@ -262,8 +262,8 @@ UID:5f03ecef84f2f16dbcc406b83b58d7085d685281d167fc3cba36a7d596aebf90@bm-la
 DESCRIPTION:Hora pendiente de confirmar.
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
  ornada: 16\nLocal: CLUB ALMASSORA BALONMANO\nVisitante: MUBAK - BM LA ROCA
- \nPabellón: Pabellón Municipal La Garrofera
-LOCATION:Pabellón Municipal La Garrofera
+ \nPabellón: PABELLÓN MUNICIPAL LA GARROFERA
+LOCATION:PABELLÓN MUNICIPAL LA GARROFERA
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:🤾 MUBAK - BM LA ROCA - KH-7 BM. GRANOLLERS ATLETIC
@@ -306,8 +306,8 @@ UID:eae94fa967487829413123e1f691129caa26b3c7289cf94614dfe1765607e4c5@bm-la
  -roca
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
  ornada: 20\nLocal: BM. MARNI ROSVAL\nVisitante: MUBAK - BM LA ROCA\nPabell
- ón: Polideportivo Marni
-LOCATION:Polideportivo Marni
+ ón: POLIDEPORTIVO MARNI
+LOCATION:POLIDEPORTIVO MARNI
 BEGIN:VALARM
 ACTION:DISPLAY
 DESCRIPTION:Partido BM La Roca mañana
@@ -362,8 +362,8 @@ UID:a3ce94702cf4cfa9ab67e4b8bb0246ffa89d590728f0d24903bf70303ae06dd4@bm-la
 DESCRIPTION:Hora pendiente de confirmar.
 DESCRIPTION:División de Honor Plata Femenina\nLiga Regular - Grupo C\n\nJ
  ornada: 24\nLocal: HANDBOL ONDA\nVisitante: MUBAK - BM LA ROCA\nPabellón:
-  Pabellón Polideportivo Víctor Cabedo
-LOCATION:Pabellón Polideportivo Víctor Cabedo
+  PABELLÓN POLIDEPORTIVO VÍCTOR CABEDO
+LOCATION:PABELLÓN POLIDEPORTIVO VÍCTOR CABEDO
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:🤾 HANDBOL SANT QUIRZE - MUBAK - BM LA ROCA
